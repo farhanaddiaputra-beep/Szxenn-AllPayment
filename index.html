@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment SzxennOfficial.ID</title>
+
+    <!-- Open Graph / WhatsApp Link Preview -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Payment SzxennOfficial.ID">
+    <meta property="og:description" content="Pembayaran via DANA, GoPay, dan QRIS. Klik untuk lihat detail pembayaran.">
+    <meta property="og:image" content="https://files.catbox.moe/tsuztn.jpg">
+    <meta property="og:image:width" content="400">
+    <meta property="og:image:height" content="400">
+    <meta property="og:url" content="https://all-payment-szxenn.vercel.app/">
+    <meta property="og:site_name" content="SzxennOfficial.ID">
+
+    <!-- WhatsApp specific -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Payment SzxennOfficial.ID">
+    <meta name="twitter:description" content="Pembayaran via DANA, GoPay, dan QRIS. Klik untuk lihat detail pembayaran.">
+    <meta name="twitter:image" content="https://files.catbox.moe/tsuztn.jpg">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f3f4f6;
+            position: relative;
+        }
+
+        .payment-card {
+            transition: all 0.3s ease;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+
+        .payment-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .payment-card.selected {
+            border-color: #7dd3fc;
+            background-color: #f0f9ff;
+            box-shadow: none;
+        }
+
+        /* QRIS Overlay */
+        .qris-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.2s ease;
+        }
+
+        .qris-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        .qris-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 1.25rem;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 0 40px rgba(6, 182, 212, 0.4);
+            max-width: 92vw;
+            width: 380px;
+            animation: slideUp 0.25s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.85rem;
+            cursor: pointer;
+            font-size: 1.6rem;
+            color: #6b7280;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+        .close-btn:hover { color: #111; }
+
+        /* Zoom wrapper */
+        .zoom-wrapper {
+            overflow: hidden;
+            border-radius: 0.75rem;
+            cursor: zoom-in;
+            position: relative;
+        }
+
+        .zoom-wrapper.zoomed {
+            cursor: zoom-out;
+        }
+
+        .qris-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.35s ease;
+            transform-origin: center center;
+            border-radius: 0.75rem;
+        }
+
+        .zoom-wrapper.zoomed .qris-image {
+            transform: scale(2);
+        }
+
+        /* Download button */
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-top: 1rem;
+            background: linear-gradient(to right, #06b6d4, #10b981);
+            color: white;
+            padding: 0.55rem 1.4rem;
+            border: none;
+            border-radius: 0.6rem;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s;
+            box-shadow: 0 4px 12px rgba(6,182,212,0.35);
+        }
+
+        .download-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .download-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Copy number block */
+        .number-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+        }
+
+        .number-text {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            color: #0c4a6e;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            width: 100%;
+            text-align: center;
+        }
+
+        .copy-btn {
+            background: linear-gradient(to right, #0ea5e9, #10b981);
+            color: white;
+            border: none;
+            border-radius: 0.4rem;
+            padding: 0.35rem 1.5rem;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s;
+            box-shadow: 0 2px 8px rgba(14,165,233,0.3);
+        }
+
+        .copy-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+        .copy-btn:active { transform: translateY(0); }
+        .copy-btn.copied { background: linear-gradient(to right, #10b981, #059669); }
+
+        /* Inline QRIS click hint */
+        .qris-inline-img {
+            cursor: zoom-in;
+            border-radius: 0.5rem;
+            transition: box-shadow 0.2s;
+            max-width: 140px;
+        }
+
+        .qris-inline-img:hover {
+            box-shadow: 0 0 0 3px #06b6d4;
+        }
+
+        /* Contact button */
+        .contact-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: linear-gradient(to right, #0ea5e9, #10b981);
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.95rem;
+            font-family: 'Poppins', sans-serif;
+            z-index: 10;
+            transition: opacity 0.2s;
+        }
+
+        .contact-button:hover { opacity: 0.85; }
+
+        .profile-picture {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #06b6d4;
+            object-fit: cover;
+        }
+
+        .container {
+            margin-top: 4rem;
+            padding: 1rem;
+        }
+
+        #paymentInfo {
+            border: 1px solid #d1d5db;
+        }
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #0c4a6e;
+            color: white;
+            padding: 0.6rem 1.4rem;
+            border-radius: 99px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s, transform 0.25s;
+            z-index: 9999;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="toast" id="toast">Nomor disalin!</div>
+    <img src="https://files.catbox.moe/tsuztn.jpg" alt="Profile Picture" class="profile-picture">
+    <button class="contact-button" onclick="contactOwner()">Contact Owner</button>
+
+    <div class="container w-full max-w-md bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-gradient-to-r from-sky-500 to-emerald-500 p-6 text-white">
+            <h1 class="text-2xl font-bold">Payment SzxennOfficial.ID</h1>
+            <p class="text-cyan-100">@SzxennOfficial</p>
+        </div>
+
+        <div class="p-6">
+            <div class="mb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Silahkan pilih metode pembayaran</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="payment-card p-4 rounded-lg bg-white hover:bg-gray-50" onclick="selectPayment('dana', this)">
+                        <div class="flex items-center justify-center mb-2">
+                            <img src="https://files.catbox.moe/9ozprx.jpg" alt="Dana" class="h-12 w-12 object-contain">
+                        </div>
+                        <p class="text-center font-medium">DANA</p>
+                    </div>
+
+                    <div class="payment-card p-4 rounded-lg bg-white hover:bg-gray-50" onclick="selectPayment('gopay', this)">
+                        <div class="flex items-center justify-center mb-2">
+                            <img src="https://files.catbox.moe/3gig7z.jpg" alt="Gopay" class="h-12 w-12 object-contain">
+                        </div>
+                        <p class="text-center font-medium">GOPAY</p>
+                    </div>
+
+                    <div class="payment-card p-4 rounded-lg bg-white hover:bg-gray-50 col-span-2" onclick="selectPayment('qris', this)">
+                        <div class="flex items-center justify-center mb-2">
+                            <img src="https://files.catbox.moe/i3fw7q.jpg" alt="Qris" class="h-24 w-24 object-contain">
+                        </div>
+                        <p class="text-center font-medium">QRIS</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="paymentInfo" class="hidden bg-gray-50 rounded-lg p-4 mt-4 transition-all duration-300"></div>
+        </div>
+    </div>
+
+    <!-- QRIS Modal Overlay -->
+    <div id="qrisOverlay" class="qris-overlay" onclick="handleOverlayClick(event)">
+        <div class="qris-container">
+            <span class="close-btn" onclick="closeQRIS()">×</span>
+            <h3 class="text-lg font-bold text-cyan-700 mb-1">QRIS Payment</h3>
+            <p class="text-xs text-gray-500 mb-3">Klik gambar untuk zoom · Klik lagi untuk kembali</p>
+
+            <div class="zoom-wrapper" id="zoomWrapper" onclick="toggleZoom()">
+                <img id="qrisModalImg"
+                     src="https://files.catbox.moe/i3fw7q.jpg"
+                     alt="QRIS Payment"
+                     class="qris-image">
+
+            </div>
+
+            <p class="text-xs text-gray-500 mt-3">Di harapkan jangan sampai salah transfer!</p>
+
+            <button class="download-btn" onclick="downloadQRIS()">
+                Download QRIS
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const QRIS_SRC = 'https://files.catbox.moe/i3fw7q.jpg';
+
+        function selectPayment(method, card) {
+            // Update selected card style
+            document.querySelectorAll('.payment-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+
+            const paymentInfo = document.getElementById('paymentInfo');
+            paymentInfo.classList.remove('hidden');
+
+            let html = '';
+
+            if (method === 'dana') {
+                html = `
+                    <h3 class="text-lg font-bold text-center text-cyan-700 mb-3">Dana Payment Details</h3>
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <p class="text-gray-600 mb-2">Payment via dana</p>
+                        <div class="number-block">
+                            <span class="number-text">085274198259</span>
+                            <button class="copy-btn" id="copyBtnDana" onclick="copyNumber('085274198259', 'copyBtnDana')">Salin</button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2 text-center">Di harapkan jangan sampai salah transfer!</p>
+                    </div>`;
+            } else if (method === 'gopay') {
+                html = `
+                    <h3 class="text-lg font-bold text-center text-cyan-700 mb-3">Gopay Payment Details</h3>
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <p class="text-gray-600 mb-2">Payment via gopay</p>
+                        <div class="number-block">
+                            <span class="number-text">085274198259</span>
+                            <button class="copy-btn" id="copyBtnGopay" onclick="copyNumber('085274198259', 'copyBtnGopay')">Salin</button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2 text-center">Di harapkan jangan sampai salah transfer!</p>
+                    </div>`;
+            } else if (method === 'qris') {
+                html = `
+                    <h3 class="text-lg font-bold text-center text-cyan-700 mb-3">Qris Payment Details</h3>
+                    <div class="flex flex-col items-center">
+                        <p class="text-gray-600 mb-2 text-sm">Klik qris untuk download</p>
+                        <img src="${QRIS_SRC}"
+                             class="qris-inline-img"
+                             alt="QRIS"
+                             onclick="openQRIS()"
+                             title="Klik untuk zoom & download">
+                        <p class="text-xs text-gray-500 mt-2">Di harapkan jangan sampai salah transfer!</p>
+                        <button class="download-btn mt-3" onclick="downloadQRIS()">Download Qris</button>
+                    </div>`;
+            }
+
+            paymentInfo.innerHTML = html;
+
+            // Smooth scroll to payment info
+            setTimeout(() => paymentInfo.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+        }
+
+        function openQRIS() {
+            const overlay = document.getElementById('qrisOverlay');
+            // Reset zoom when opening
+            document.getElementById('zoomWrapper').classList.remove('zoomed');
+            overlay.classList.add('active');
+        }
+
+        function closeQRIS() {
+            document.getElementById('qrisOverlay').classList.remove('active');
+            document.getElementById('zoomWrapper').classList.remove('zoomed');
+        }
+
+        function handleOverlayClick(e) {
+            // Close if clicking outside the container
+            if (e.target === document.getElementById('qrisOverlay')) {
+                closeQRIS();
+            }
+        }
+
+        function toggleZoom() {
+            document.getElementById('zoomWrapper').classList.toggle('zoomed');
+        }
+
+        async function downloadQRIS() {
+            try {
+                const response = await fetch(QRIS_SRC);
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'QRIS_SzxennOfficial.jpg';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch {
+                // Fallback: open in new tab
+                window.open(QRIS_SRC, '_blank');
+            }
+        }
+
+        function copyNumber(number, btnId) {
+            navigator.clipboard.writeText(number).then(() => {
+                showToast();
+            }).catch(() => {
+                const el = document.createElement('textarea');
+                el.value = number;
+                document.body.appendChild(el);
+                el.select();
+                document.execCommand('copy');
+                document.body.removeChild(el);
+                showToast();
+            });
+        }
+
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function contactOwner() {
+            const phoneNumber = "6208892189745";
+            const message = "Hello, I would like to inquire about your services.";
+            window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeQRIS();
+        });
+    </script>
+</body>
+</html>
